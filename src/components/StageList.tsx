@@ -38,13 +38,14 @@ export const StageList: React.FC<StageListProps> = ({
   };
 
   const activeStage = stages[activeStageIndex];
+  const isFeedbackStage = activeStageIndex === 4 || activeStageIndex === 5 || activeStageIndex === 6;
 
   return (
     <div className="narrative-col">
       <div
         className="stage-tablist"
         role="tablist"
-        aria-label="Four stages of truffle aroma ingredient development"
+        aria-label="Eight stages of truffle aroma ingredient research"
       >
         {stages.map((stage, index) => {
           const isActive = index === activeStageIndex;
@@ -82,11 +83,34 @@ export const StageList: React.FC<StageListProps> = ({
         tabIndex={0}
         className="stage-detail-panel"
       >
+        <div className="detail-panel-phase-badge">{activeStage.phase}</div>
         <strong>Focus: {activeStage.headline}</strong>
-        <p style={{ margin: 0 }}>{activeStage.scientificContext}</p>
+        <p style={{ margin: '4px 0 8px 0' }}>{activeStage.scientificContext}</p>
+
+        {/* Monitored Parameters for Step 5 */}
+        {activeStage.parameters && (
+          <div className="parameters-pill-list" aria-label="Monitored parameters">
+            {activeStage.parameters.map((param) => (
+              <span key={param} className="param-pill">
+                • {param}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Feedback Loop Notice when relevant */}
+        {isFeedbackStage && (
+          <div className="detail-feedback-note">
+            <span aria-hidden="true">↺</span>
+            <span>Iterative loop: Analytical feedback directly informs process optimization in the fermenter.</span>
+          </div>
+        )}
       </div>
 
       <footer className="narrative-footer">
+        <p className="footer-tagline-text">
+          {PROCESS_META.footerTagline}
+        </p>
         <p className="disclaimer-text">
           {PROCESS_META.disclaimer}
         </p>
