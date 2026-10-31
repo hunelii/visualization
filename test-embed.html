@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Embed Harness Test — Huner Visualization</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 40px 20px;
+      background-color: #e5e0d3;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #22311d;
+    }
+    .test-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #f4f1e8;
+      border: 1px solid rgba(34, 49, 29, 0.2);
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    .test-header {
+      border-bottom: 1px solid rgba(34, 49, 29, 0.15);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    .test-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+    }
+    .test-meta {
+      font-size: 13px;
+      color: #374f2f;
+      margin: 0;
+    }
+    .log-panel {
+      margin-top: 16px;
+      padding: 12px;
+      background: #22311d;
+      color: #f4f1e8;
+      font-family: monospace;
+      font-size: 12px;
+      border-radius: 4px;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+    iframe {
+      width: 100%;
+      border: none;
+      display: block;
+      transition: height 0.2s ease-out;
+      background-color: #f4f1e8;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <div class="test-header">
+      <h1 class="test-title">Huner Visualization — Embed Verification Harness</h1>
+      <p class="test-meta">
+        Testing iframe embedding with <code>?embed=1</code> and <code>postMessage</code> height auto-resizing protocol.
+      </p>
+    </div>
+
+    <!-- Iframe Container -->
+    <iframe
+      id="vis-iframe"
+      src="/visualization/?embed=1"
+      title="Huner Biofoundry — From Molasses to Truffle Aroma Process Visualization"
+      scrolling="no"
+    ></iframe>
+
+    <div class="log-panel" id="log-output">
+      [Harness Ready] Waiting for postMessage from child iframe...
+    </div>
+  </div>
+
+  <script>
+    const iframe = document.getElementById('vis-iframe');
+    const logOutput = document.getElementById('log-output');
+
+    function log(msg) {
+      const line = document.createElement('div');
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      logOutput.appendChild(line);
+      logOutput.scrollTop = logOutput.scrollHeight;
+    }
+
+    window.addEventListener('message', (event) => {
+      // Validate message schema
+      if (event.data && event.data.type === 'huner:visualization:resize') {
+        const newHeight = event.data.height;
+        if (typeof newHeight === 'number' && newHeight > 50 && newHeight < 3000) {
+          iframe.style.height = `${newHeight}px`;
+          log(`Received 'huner:visualization:resize': set iframe height to ${newHeight}px`);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
