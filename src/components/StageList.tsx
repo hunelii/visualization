@@ -5,7 +5,7 @@ import { PROCESS_META } from '../data/stages';
 interface StageListProps {
   stages: StageData[];
   activeStageIndex: number;
-  onSelectStage: (index: number) => void;
+  onSelectStage: (index: number, shouldScroll?: boolean) => void;
 }
 
 export const StageList: React.FC<StageListProps> = ({
@@ -32,79 +32,101 @@ export const StageList: React.FC<StageListProps> = ({
     }
 
     if (nextIndex !== -1) {
-      onSelectStage(nextIndex);
+      onSelectStage(nextIndex, true);
       tabRefs.current[nextIndex]?.focus();
     }
   };
 
-  const activeStage = stages[activeStageIndex];
-  const isFeedbackStage = activeStageIndex === 4 || activeStageIndex === 5 || activeStageIndex === 6;
-
   return (
     <div className="narrative-col">
-      <div
-        className="stage-tablist"
-        role="tablist"
-        aria-label="Eight stages of truffle aroma ingredient research"
-      >
+      {/* Sticky Compact Jump Navigation */}
+      <nav className="desktop-jump-nav" aria-label="Quick jump between stages">
+        <span className="jump-nav-label">Jump to stage:</span>
+        <div className="jump-nav-pills" role="tablist">
+          {stages.map((stage, idx) => {
+            const isActive = idx === activeStageIndex;
+            return (
+              <button
+                key={stage.id}
+                ref={(el) => {
+                  tabRefs.current[idx] = el;
+                }}
+                role="tab"
+                aria-selected={isActive}
+                className={`jump-pill-btn ${isActive ? 'is-active' : ''}`}
+                onClick={() => onSelectStage(idx, true)}
+                onKeyDown={(e) => handleKeyDown(e, idx)}
+                title={`${stage.numberString} ${stage.name}`}
+              >
+                {stage.numberString}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* 8 Scroll-Track Stage Blocks */}
+      <div className="stage-scroll-track" role="feed" aria-label="Process stages narrative">
         {stages.map((stage, index) => {
           const isActive = index === activeStageIndex;
+          const isFeedbackStage = index === 4 || index === 5 || index === 6;
+
           return (
-            <button
+            <article
               key={stage.id}
-              ref={(el) => {
-                tabRefs.current[index] = el;
+              id={`stage-block-${stage.id}`}
+              className={`stage-scroll-block ${isActive ? 'is-active' : ''}`}
+              onClick={() => onSelectStage(index, false)}
+              tabIndex={0}
+              role="region"
+              aria-label={`Stage ${stage.numberString}: ${stage.name}`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelectStage(index, true);
+                }
               }}
-              role="tab"
-              id={`stage-tab-${stage.id}`}
-              aria-selected={isActive}
-              aria-controls={`stage-panel-${stage.id}`}
-              tabIndex={isActive ? 0 : -1}
-              className={`stage-tab-button ${isActive ? 'is-active' : ''}`}
-              onClick={() => onSelectStage(index)}
-              onKeyDown={(e) => handleKeyDown(e, index)}
             >
-              <div className="stage-tab-header">
-                <span className="stage-tab-num">{stage.numberString}</span>
-                <span className="stage-tab-title">{stage.name}</span>
-                <span className="stage-tab-role">{stage.shortRole}</span>
+              {/* Card Top Meta */}
+              <div className="stage-block-header">
+                <span className="stage-block-num">{stage.numberString}</span>
+                <span className="stage-block-phase">{stage.phase}</span>
+                <span className="stage-block-role">{stage.shortRole}</span>
               </div>
-              <p className="stage-tab-desc">{stage.description}</p>
-            </button>
+
+              {/* Title & Headline */}
+              <h2 className="stage-block-title">{stage.name}</h2>
+              <div className="stage-block-headline">{stage.headline}</div>
+
+              {/* Description */}
+              <p className="stage-block-desc">{stage.description}</p>
+
+              {/* Scientific Context */}
+              <div className="stage-block-context">
+                <p>{stage.scientificContext}</p>
+              </div>
+
+              {/* Monitored Parameters for Step 5 */}
+              {stage.parameters && (
+                <div className="parameters-pill-list" aria-label="Monitored parameters">
+                  {stage.parameters.map((param) => (
+                    <span key={param} className="param-pill">
+                      • {param}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Feedback Loop Notice when relevant */}
+              {isFeedbackStage && (
+                <div className="stage-block-feedback-note" aria-hidden="true">
+                  <span className="feedback-icon">↺</span>
+                  <span>Analytical feedback iteratively informs fermentation parameters.</span>
+                </div>
+              )}
+            </article>
           );
         })}
-      </div>
-
-      {/* Dynamic Detail Panel for the Active Stage */}
-      <div
-        id={`stage-panel-${activeStage.id}`}
-        role="tabpanel"
-        aria-labelledby={`stage-tab-${activeStage.id}`}
-        tabIndex={0}
-        className="stage-detail-panel"
-      >
-        <div className="detail-panel-phase-badge">{activeStage.phase}</div>
-        <strong>Focus: {activeStage.headline}</strong>
-        <p style={{ margin: '4px 0 8px 0' }}>{activeStage.scientificContext}</p>
-
-        {/* Monitored Parameters for Step 5 */}
-        {activeStage.parameters && (
-          <div className="parameters-pill-list" aria-label="Monitored parameters">
-            {activeStage.parameters.map((param) => (
-              <span key={param} className="param-pill">
-                • {param}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Feedback Loop Notice when relevant */}
-        {isFeedbackStage && (
-          <div className="detail-feedback-note">
-            <span aria-hidden="true">↺</span>
-            <span>Iterative loop: Analytical feedback directly informs process optimization in the fermenter.</span>
-          </div>
-        )}
       </div>
 
       <footer className="narrative-footer">
