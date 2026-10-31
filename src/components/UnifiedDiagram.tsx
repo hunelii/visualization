@@ -4,38 +4,52 @@ import { StageData } from '../types';
 interface UnifiedDiagramProps {
   stages?: StageData[];
   activeStageIndex: number;
-  onSelectStage: (index: number, shouldScroll?: boolean) => void;
+  onSelectStage: (index: number) => void;
 }
 
+const STATION_X = [90, 250, 410, 570, 740, 920, 1090, 1270];
+
 export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
-  stages,
+  stages = [],
   activeStageIndex,
   onSelectStage,
 }) => {
   const isFeedbackActive = activeStageIndex === 4 || activeStageIndex === 5 || activeStageIndex === 6;
-  const currentStage = stages ? stages[activeStageIndex] : null;
+  const currentStage = stages[activeStageIndex];
   const progressPercent = Math.round(((activeStageIndex + 1) / 8) * 100);
 
   return (
     <div className="diagram-card">
+      {/* Dynamic Scrollytelling Header & Progress Bar */}
       <div className="diagram-meta-header" aria-hidden="true">
-        <div className="diagram-header-left">
-          <span className="diagram-meta-title">Scroll-Synchronized Pathway</span>
-          {currentStage && (
-            <span className="diagram-current-stage-pill">
-              {currentStage.numberString} / 08 · {currentStage.name}
-            </span>
-          )}
+        <div className="diagram-progress-info">
+          <span className="diagram-meta-title">
+            Stage 0{activeStageIndex + 1} of 08
+          </span>
+          <span className="diagram-meta-phase">
+            {currentStage ? ` · ${currentStage.phase}` : ''}
+          </span>
         </div>
-        <span className="diagram-meta-flow">{progressPercent}%</span>
+        <span className="diagram-meta-flow">{progressPercent}% Completed</span>
       </div>
 
       {/* Progress Track Line */}
-      <div className="diagram-progress-track" aria-hidden="true">
+      <div className="scroll-progress-track" aria-hidden="true">
         <div
-          className="diagram-progress-bar"
+          className="scroll-progress-fill"
           style={{ width: `${progressPercent}%` }}
         />
+        {/* Stage Milestone Dots */}
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((idx) => (
+          <button
+            key={idx}
+            type="button"
+            className={`milestone-dot ${idx <= activeStageIndex ? 'is-passed' : ''} ${idx === activeStageIndex ? 'is-current' : ''}`}
+            style={{ left: `${(idx / 7) * 100}%` }}
+            onClick={() => onSelectStage(idx)}
+            title={`Jump to stage 0${idx + 1}`}
+          />
+        ))}
       </div>
 
       <div className="svg-container" style={{ aspectRatio: '1440 / 500' }}>
@@ -45,87 +59,165 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           role="img"
-          aria-label="Comprehensive 8-stage schematic: Molasses, Medium Preparation, Fungal Culture, Inoculation, Fermentation, Sampling, Aroma Analysis, and Ingredient Development"
+          aria-label="Comprehensive 8-stage schematic with scroll-driven animated flow: Molasses, Medium Preparation, Fungal Culture, Inoculation, Fermentation, Sampling, Aroma Analysis, and Ingredient Development"
         >
-          {/* Technical Registration Frame & Baseline */}
+          {/* Subtle Technical Registration Frame & Baseline */}
           <g className="svg-grid-registration" stroke="rgba(34, 49, 29, 0.12)" strokeWidth="1" aria-hidden="true">
+            {/* Corner registration crosses */}
             <path d="M 24 30 L 36 30 M 30 24 L 30 36" />
             <path d="M 1404 30 L 1416 30 M 1410 24 L 1410 36" />
             <path d="M 24 470 L 36 470 M 30 464 L 30 476" />
             <path d="M 1404 470 L 1416 470 M 1410 464 L 1410 476" />
+
+            {/* Baseline axis */}
             <line x1="30" y1="220" x2="1410" y2="220" stroke="rgba(34, 49, 29, 0.08)" strokeDasharray="4 6" />
 
-            {[90, 250, 410, 570, 740, 920, 1090, 1270].map((x, idx) => (
-              <circle
-                key={idx}
-                cx={x}
-                cy="465"
-                r={idx === activeStageIndex ? "3.5" : "2"}
-                fill={idx === activeStageIndex ? "var(--foundry-green)" : "rgba(34, 49, 29, 0.25)"}
-              />
+            {/* Station bottom marker points */}
+            {STATION_X.map((x, idx) => (
+              <circle key={idx} cx={x} cy="465" r="2.2" fill={idx === activeStageIndex ? "var(--growth-green)" : "rgba(34, 49, 29, 0.25)"} />
             ))}
           </g>
 
           {/* ============================================================ */}
-          {/* PROCESS FLOW CONDUITS / PIPES                               */}
+          {/* DYNAMIC SCROLL CAMERA SPOTLIGHT (Glides across stations)     */}
+          {/* ============================================================ */}
+          <g
+            className="camera-spotlight-group"
+            transform={`translate(${STATION_X[activeStageIndex]}, 0)`}
+            style={{
+              transition: 'transform 0.65s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+            aria-hidden="true"
+          >
+            {/* Soft focal halo */}
+            <ellipse cx="0" cy="205" rx="76" ry="135" fill="rgba(74, 103, 65, 0.07)" />
+            <ellipse cx="0" cy="205" rx="70" ry="128" stroke="var(--growth-green)" strokeWidth="1.2" strokeDasharray="3 4" opacity="0.65" />
+            {/* Downward indicator arrow */}
+            <path d="M 0 54 L 0 64 M -4 60 L 0 64 L 4 60" stroke="var(--growth-green)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </g>
+
+          {/* ============================================================ */}
+          {/* PROCESS FLOW CONDUITS / PIPES WITH ANIMATED LIQUID FLOW      */}
           {/* ============================================================ */}
           <g className="svg-connectors" aria-hidden="true">
             {/* 01 Molasses -> 02 Medium Prep */}
             <path
               d="M 130 220 L 205 220"
-              stroke={activeStageIndex === 0 ? "var(--foundry-green)" : "rgba(34, 49, 29, 0.25)"}
-              strokeWidth={activeStageIndex === 0 ? "2.2" : "1.4"}
-              className={activeStageIndex === 0 ? "anim-nutrient-flow" : ""}
+              stroke={activeStageIndex >= 1 ? "var(--foundry-green)" : "rgba(34, 49, 29, 0.25)"}
+              strokeWidth={activeStageIndex >= 1 ? "2" : "1.4"}
             />
+            {activeStageIndex >= 1 && (
+              <path
+                d="M 130 220 L 205 220"
+                stroke="var(--growth-green)"
+                strokeWidth="2.5"
+                className="flowing-conduit"
+                strokeLinecap="round"
+              />
+            )}
             <path d="M 165 216 L 171 220 L 165 224" stroke="rgba(34, 49, 29, 0.35)" strokeWidth="1.4" fill="none" />
 
             {/* 02 Medium Prep -> 04 Inoculation */}
             <path
               d="M 295 220 L 525 220"
-              stroke={activeStageIndex === 1 ? "var(--foundry-green)" : "rgba(34, 49, 29, 0.25)"}
-              strokeWidth={activeStageIndex === 1 ? "2.2" : "1.4"}
+              stroke={activeStageIndex >= 3 ? "var(--foundry-green)" : "rgba(34, 49, 29, 0.25)"}
+              strokeWidth={activeStageIndex >= 3 ? "2" : "1.4"}
             />
+            {activeStageIndex >= 3 && (
+              <path
+                d="M 295 220 L 525 220"
+                stroke="var(--growth-green)"
+                strokeWidth="2.5"
+                className="flowing-conduit"
+                strokeLinecap="round"
+              />
+            )}
             <path d="M 345 216 L 351 220 L 345 224" stroke="rgba(34, 49, 29, 0.35)" strokeWidth="1.4" fill="none" />
 
             {/* 03 Fungal Culture Inoculum -> 04 Inoculation Port */}
             <path
               d="M 445 235 Q 490 235 520 200 L 542 175"
               stroke="var(--growth-green)"
-              strokeWidth={activeStageIndex === 2 || activeStageIndex === 3 ? "2.2" : "1.5"}
-              strokeDasharray="3 3"
+              strokeWidth={activeStageIndex >= 2 ? "2" : "1.5"}
+              strokeDasharray={activeStageIndex >= 2 ? "none" : "3 3"}
             />
+            {activeStageIndex >= 2 && (
+              <path
+                d="M 445 235 Q 490 235 520 200 L 542 175"
+                stroke="var(--foundry-green)"
+                strokeWidth="2.5"
+                className="flowing-conduit"
+                strokeLinecap="round"
+              />
+            )}
             <path d="M 536 178 L 542 174 L 544 182" stroke="var(--growth-green)" strokeWidth="1.4" fill="none" />
 
             {/* 04 Inoculation -> 05 Fermentation */}
             <path
               d="M 615 220 L 685 220"
-              stroke={activeStageIndex === 3 || activeStageIndex === 4 ? "var(--foundry-green)" : "rgba(34, 49, 29, 0.25)"}
-              strokeWidth={activeStageIndex === 4 ? "2.2" : "1.4"}
+              stroke={activeStageIndex >= 4 ? "var(--foundry-green)" : "rgba(34, 49, 29, 0.25)"}
+              strokeWidth={activeStageIndex >= 4 ? "2" : "1.4"}
             />
+            {activeStageIndex >= 4 && (
+              <path
+                d="M 615 220 L 685 220"
+                stroke="var(--growth-green)"
+                strokeWidth="2.5"
+                className="flowing-conduit"
+                strokeLinecap="round"
+              />
+            )}
             <path d="M 648 216 L 654 220 L 648 224" stroke="rgba(34, 49, 29, 0.35)" strokeWidth="1.4" fill="none" />
 
             {/* 05 Fermentation -> 06 Sampling */}
             <path
               d="M 795 220 L 875 220"
-              stroke={activeStageIndex === 4 || activeStageIndex === 5 ? "var(--foundry-green)" : "rgba(34, 49, 29, 0.25)"}
-              strokeWidth={activeStageIndex === 5 ? "2.2" : "1.4"}
+              stroke={activeStageIndex >= 5 ? "var(--foundry-green)" : "rgba(34, 49, 29, 0.25)"}
+              strokeWidth={activeStageIndex >= 5 ? "2" : "1.4"}
             />
+            {activeStageIndex >= 5 && (
+              <path
+                d="M 795 220 L 875 220"
+                stroke="var(--growth-green)"
+                strokeWidth="2.5"
+                className="flowing-conduit"
+                strokeLinecap="round"
+              />
+            )}
             <path d="M 832 216 L 838 220 L 832 224" stroke="rgba(34, 49, 29, 0.35)" strokeWidth="1.4" fill="none" />
 
             {/* 06 Sampling -> 07 Aroma Analysis */}
             <path
               d="M 965 220 L 1040 220"
-              stroke={activeStageIndex === 5 || activeStageIndex === 6 ? "var(--foundry-green)" : "rgba(34, 49, 29, 0.25)"}
-              strokeWidth={activeStageIndex === 6 ? "2.2" : "1.4"}
+              stroke={activeStageIndex >= 6 ? "var(--foundry-green)" : "rgba(34, 49, 29, 0.25)"}
+              strokeWidth={activeStageIndex >= 6 ? "2" : "1.4"}
             />
+            {activeStageIndex >= 6 && (
+              <path
+                d="M 965 220 L 1040 220"
+                stroke="var(--growth-green)"
+                strokeWidth="2.5"
+                className="flowing-conduit"
+                strokeLinecap="round"
+              />
+            )}
             <path d="M 998 216 L 1004 220 L 998 224" stroke="rgba(34, 49, 29, 0.35)" strokeWidth="1.4" fill="none" />
 
             {/* 07 Aroma Analysis -> 08 Ingredient Development */}
             <path
               d="M 1150 220 L 1225 220"
-              stroke={activeStageIndex === 7 ? "var(--foundry-green)" : "rgba(34, 49, 29, 0.25)"}
-              strokeWidth={activeStageIndex === 7 ? "2.2" : "1.4"}
+              stroke={activeStageIndex >= 7 ? "var(--foundry-green)" : "rgba(34, 49, 29, 0.25)"}
+              strokeWidth={activeStageIndex >= 7 ? "2" : "1.4"}
             />
+            {activeStageIndex >= 7 && (
+              <path
+                d="M 1150 220 L 1225 220"
+                stroke="var(--growth-green)"
+                strokeWidth="2.5"
+                className="flowing-conduit"
+                strokeLinecap="round"
+              />
+            )}
             <path d="M 1184 216 L 1190 220 L 1184 224" stroke="rgba(34, 49, 29, 0.35)" strokeWidth="1.4" fill="none" />
           </g>
 
@@ -133,20 +225,34 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
           {/* FEEDBACK LOOP: 07 / 06 -> 05 FERMENTATION                   */}
           {/* ============================================================ */}
           <g className={`feedback-loop-layer ${isFeedbackActive ? 'is-active' : ''}`} aria-hidden="true">
+            {/* Loop path: Drops from Sampling (X=920) and Analysis (X=1090), runs left to Fermentation (X=740) */}
             <path
               d="M 1090 280 L 1090 395 L 740 395 L 740 300"
               stroke={isFeedbackActive ? "var(--growth-green)" : "rgba(74, 103, 65, 0.35)"}
-              strokeWidth={isFeedbackActive ? "2" : "1.2"}
+              strokeWidth={isFeedbackActive ? "1.8" : "1.2"}
               strokeDasharray="4 4"
               fill="none"
             />
+            {/* Reverse flowing pulse when active */}
+            {isFeedbackActive && (
+              <path
+                d="M 1090 280 L 1090 395 L 740 395 L 740 300"
+                stroke="var(--foundry-green)"
+                strokeWidth="2.5"
+                className="flowing-conduit-reverse"
+                fill="none"
+              />
+            )}
+
+            {/* Branch from 06 Sampling joining the loop */}
             <path
               d="M 920 285 L 920 395"
               stroke={isFeedbackActive ? "var(--growth-green)" : "rgba(74, 103, 65, 0.35)"}
-              strokeWidth={isFeedbackActive ? "2" : "1.2"}
+              strokeWidth={isFeedbackActive ? "1.8" : "1.2"}
               strokeDasharray="4 4"
               fill="none"
             />
+            {/* Upward injection arrow into Fermentation */}
             <path
               d="M 736 308 L 740 300 L 744 308"
               stroke={isFeedbackActive ? "var(--growth-green)" : "rgba(74, 103, 65, 0.5)"}
@@ -154,6 +260,7 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
               fill="none"
             />
 
+            {/* Pill Labels on the feedback loop */}
             {/* Analytical feedback pill */}
             <g transform="translate(980, 385)">
               <rect x="-65" y="-12" width="130" height="24" rx="12" fill="var(--culture-white)" stroke={isFeedbackActive ? "var(--growth-green)" : "rgba(34, 49, 29, 0.3)"} strokeWidth="1.2" />
@@ -180,19 +287,21 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
             tabIndex={0}
             role="button"
             aria-label="Select stage 1: Molasses feedstock selection"
-            onClick={() => onSelectStage(0, true)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(0, true); } }}
+            onClick={() => onSelectStage(0)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(0); } }}
           >
             <rect x="25" y="60" width="130" height="280" rx="4" fill="transparent" className="station-focus-ring" stroke="var(--foundry-green)" strokeWidth="1.5" />
             <text x="90" y="85" textAnchor="middle" className="station-badge-text">01</text>
             <text x="90" y="105" textAnchor="middle" className="station-label-text">Molasses</text>
             <text x="90" y="120" textAnchor="middle" className="station-sublabel-text">Feedstock</text>
 
+            {/* Dropper & Droplet */}
             <g transform="translate(58, 175)">
               <path d="M 0 -22 C 10 -4 14 6 14 16 C 14 26 8 32 0 32 C -8 32 -14 26 -14 16 C -14 6 -10 -4 0 -22 Z" stroke="var(--foundry-green)" strokeWidth="1.4" fill="rgba(74, 103, 65, 0.2)" />
               <circle cx="0" cy="14" r="2.2" fill="var(--foundry-green)" />
             </g>
 
+            {/* Storage Tank */}
             <rect x="75" y="165" width="46" height="75" rx="4" stroke="var(--foundry-green)" strokeWidth="1.5" fill={activeStageIndex === 0 ? "rgba(74, 103, 65, 0.14)" : "rgba(74, 103, 65, 0.05)"} />
             <line x1="77" y1="185" x2="119" y2="185" stroke="var(--culture-green)" strokeWidth="1" strokeDasharray="2 2" />
             <path d="M 80 240 L 76 252 M 116 240 L 120 252" stroke="var(--foundry-green)" strokeWidth="1.4" strokeLinecap="round" />
@@ -209,17 +318,19 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
             tabIndex={0}
             role="button"
             aria-label="Select stage 2: Medium preparation and nutrient formulation"
-            onClick={() => onSelectStage(1, true)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(1, true); } }}
+            onClick={() => onSelectStage(1)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(1); } }}
           >
             <rect x="185" y="60" width="130" height="280" rx="4" fill="transparent" className="station-focus-ring" stroke="var(--foundry-green)" strokeWidth="1.5" />
             <text x="250" y="85" textAnchor="middle" className="station-badge-text">02</text>
             <text x="250" y="105" textAnchor="middle" className="station-label-text">Medium Prep</text>
             <text x="250" y="120" textAnchor="middle" className="station-sublabel-text">Formulation</text>
 
+            {/* Agitator Motor */}
             <rect x="241" y="145" width="18" height="16" rx="2" stroke="var(--foundry-green)" strokeWidth="1.4" fill="var(--culture-white)" />
             <line x1="250" y1="161" x2="250" y2="235" stroke="var(--foundry-green)" strokeWidth="1.4" />
 
+            {/* Tank Contour */}
             <rect x="215" y="165" width="70" height="75" rx="5" stroke="var(--foundry-green)" strokeWidth="1.5" fill={activeStageIndex === 1 ? "rgba(74, 103, 65, 0.12)" : "rgba(74, 103, 65, 0.05)"} />
             <line x1="235" y1="205" x2="265" y2="205" stroke="var(--growth-green)" strokeWidth="1.5" strokeLinecap="round" />
             <line x1="237" y1="228" x2="263" y2="228" stroke="var(--growth-green)" strokeWidth="1.5" strokeLinecap="round" />
@@ -237,16 +348,18 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
             tabIndex={0}
             role="button"
             aria-label="Select stage 3: Fungal culture Tuber melanosporum isolate"
-            onClick={() => onSelectStage(2, true)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(2, true); } }}
+            onClick={() => onSelectStage(2)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(2); } }}
           >
             <rect x="345" y="60" width="130" height="280" rx="4" fill="transparent" className="station-focus-ring" stroke="var(--foundry-green)" strokeWidth="1.5" />
             <text x="410" y="85" textAnchor="middle" className="station-badge-text">03</text>
             <text x="410" y="105" textAnchor="middle" className="station-label-text">Fungal Culture</text>
             <text x="410" y="120" textAnchor="middle" className="station-sublabel-text">Strain isolate</text>
 
+            {/* Petri dish */}
             <circle cx="410" cy="165" r="28" stroke="var(--foundry-green)" strokeWidth="1.4" fill={activeStageIndex === 2 ? "rgba(74, 103, 65, 0.12)" : "rgba(74, 103, 65, 0.05)"} />
             <circle cx="410" cy="165" r="24" stroke="rgba(34, 49, 29, 0.2)" strokeWidth="0.8" strokeDasharray="2 2" />
+            {/* Radiating hyphae */}
             <g className={activeStageIndex === 2 ? "anim-hyphae" : ""}>
               {[0, 60, 120, 180, 240, 300].map((deg) => (
                 <line
@@ -263,6 +376,7 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
               <circle cx="410" cy="165" r="2.5" fill="var(--foundry-green)" />
             </g>
 
+            {/* Shake Flask pre-culture */}
             <g transform="translate(410, 235)">
               <path d="M -5 -24 L 5 -24 M -3 -24 L -3 -15 L -16 16 C -18 20 -14 22 -8 22 L 8 22 C 14 22 18 20 16 16 L 3 -15 L 3 -24" stroke="var(--foundry-green)" strokeWidth="1.3" fill="var(--culture-white)" strokeLinejoin="round" />
               <circle cx="0" cy="12" r="3.2" fill="var(--growth-green)" />
@@ -280,15 +394,17 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
             tabIndex={0}
             role="button"
             aria-label="Select stage 4: Inoculation introducing culture into medium"
-            onClick={() => onSelectStage(3, true)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(3, true); } }}
+            onClick={() => onSelectStage(3)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(3); } }}
           >
             <rect x="505" y="60" width="130" height="280" rx="4" fill="transparent" className="station-focus-ring" stroke="var(--foundry-green)" strokeWidth="1.5" />
             <text x="570" y="85" textAnchor="middle" className="station-badge-text">04</text>
             <text x="570" y="105" textAnchor="middle" className="station-label-text">Inoculation</text>
             <text x="570" y="120" textAnchor="middle" className="station-sublabel-text">Seeding</text>
 
+            {/* Seed Vessel */}
             <rect x="540" y="165" width="60" height="75" rx="5" stroke="var(--foundry-green)" strokeWidth="1.5" fill={activeStageIndex === 3 ? "rgba(74, 103, 65, 0.12)" : "rgba(74, 103, 65, 0.05)"} />
+            {/* Top Aseptic Transfer Port */}
             <path d="M 562 165 L 562 152 L 578 152 L 578 165" stroke="var(--foundry-green)" strokeWidth="1.3" />
             <circle cx="570" cy="195" r="4.5" fill="var(--growth-green)" className={activeStageIndex === 3 ? "anim-highlight-pulse" : ""} />
             <circle cx="558" cy="212" r="2.4" fill="var(--foundry-green)" />
@@ -307,21 +423,24 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
             tabIndex={0}
             role="button"
             aria-label="Select stage 5: Fermentation with real-time monitored conditions"
-            onClick={() => onSelectStage(4, true)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(4, true); } }}
+            onClick={() => onSelectStage(4)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(4); } }}
           >
             <rect x="665" y="60" width="150" height="280" rx="4" fill="transparent" className="station-focus-ring" stroke="var(--foundry-green)" strokeWidth="1.5" />
             <text x="740" y="85" textAnchor="middle" className="station-badge-text">05</text>
             <text x="740" y="105" textAnchor="middle" className="station-label-text">Fermentation</text>
             <text x="740" y="120" textAnchor="middle" className="station-sublabel-text">Submerged growth</text>
 
+            {/* Overhead Drive Motor */}
             <rect x="731" y="140" width="18" height="18" rx="2" stroke="var(--foundry-green)" strokeWidth="1.4" fill="var(--culture-white)" />
             <line x1="740" y1="158" x2="740" y2="242" stroke="var(--foundry-green)" strokeWidth="1.5" />
 
+            {/* Main Glass Vessel */}
             <rect x="702" y="158" width="76" height="92" rx="7" stroke="var(--foundry-green)" strokeWidth="1.6" fill={activeStageIndex === 4 ? "rgba(74, 103, 65, 0.16)" : "rgba(74, 103, 65, 0.06)"} />
             <line x1="700" y1="164" x2="780" y2="164" stroke="var(--foundry-green)" strokeWidth="2" />
             <line x1="700" y1="244" x2="780" y2="244" stroke="var(--foundry-green)" strokeWidth="2" />
 
+            {/* Submerged Hyphal Mycelium Network */}
             <g className={activeStageIndex === 4 ? "anim-hyphae" : ""}>
               <path d="M 740 220 Q 726 210 716 206 M 726 210 Q 720 218 714 222" stroke="var(--foundry-green)" strokeWidth="1.3" strokeLinecap="round" />
               <path d="M 740 220 Q 754 208 764 204 M 752 210 Q 758 218 764 222" stroke="var(--foundry-green)" strokeWidth="1.3" strokeLinecap="round" />
@@ -330,8 +449,10 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
               <circle cx="740" cy="220" r="2.2" fill="var(--foundry-green)" />
             </g>
 
+            {/* Legs */}
             <path d="M 710 250 L 706 262 M 770 250 L 774 262" stroke="var(--foundry-green)" strokeWidth="1.4" strokeLinecap="round" />
 
+            {/* Sensor Tags (Temp, pH, DO, Biomass) */}
             <g transform="translate(784, 168)" className="sensor-tag-mini" aria-hidden="true">
               <text x="0" y="8" className="station-sublabel-text" fill="var(--culture-green)" style={{ fontSize: '8px', fontWeight: 600 }}>• Temp</text>
               <text x="0" y="20" className="station-sublabel-text" fill="var(--culture-green)" style={{ fontSize: '8px', fontWeight: 600 }}>• pH</text>
@@ -351,22 +472,27 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
             tabIndex={0}
             role="button"
             aria-label="Select stage 6: Sterile sampling and aliquot collection"
-            onClick={() => onSelectStage(5, true)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(5, true); } }}
+            onClick={() => onSelectStage(5)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(5); } }}
           >
             <rect x="855" y="60" width="130" height="280" rx="4" fill="transparent" className="station-focus-ring" stroke="var(--foundry-green)" strokeWidth="1.5" />
             <text x="920" y="85" textAnchor="middle" className="station-badge-text">06</text>
             <text x="920" y="105" textAnchor="middle" className="station-label-text">Sampling</text>
             <text x="920" y="120" textAnchor="middle" className="station-sublabel-text">Collection</text>
 
+            {/* Sampling 3-way Valve */}
             <rect x="902" y="160" width="36" height="18" rx="2" stroke="var(--foundry-green)" strokeWidth="1.4" fill="var(--culture-white)" />
             <path d="M 920 160 L 920 150 M 912 150 L 928 150" stroke="var(--foundry-green)" strokeWidth="1.3" />
 
+            {/* Test Tubes Rack */}
             <rect x="890" y="195" width="60" height="42" rx="2" stroke="rgba(34, 49, 29, 0.25)" strokeWidth="1" strokeDasharray="2 2" fill="none" />
+            {/* Tube 1 */}
             <rect x="898" y="188" width="10" height="36" rx="5" stroke="var(--foundry-green)" strokeWidth="1.2" fill="var(--culture-white)" />
             <path d="M 899 210 L 907 210 C 907 218 899 218 899 210 Z" fill="rgba(74, 103, 65, 0.3)" />
+            {/* Tube 2 (Active Aliquot) */}
             <rect x="915" y="188" width="10" height="36" rx="5" stroke="var(--foundry-green)" strokeWidth="1.4" fill={activeStageIndex === 5 ? "rgba(74, 103, 65, 0.16)" : "var(--culture-white)"} />
             <path d="M 916 205 L 924 205 C 924 218 916 218 916 205 Z" fill="var(--growth-green)" className={activeStageIndex === 5 ? "anim-highlight-pulse" : ""} />
+            {/* Tube 3 */}
             <rect x="932" y="188" width="10" height="36" rx="5" stroke="var(--foundry-green)" strokeWidth="1.2" fill="var(--culture-white)" />
             <path d="M 933 214 L 941 214 C 941 218 933 218 933 214 Z" fill="rgba(74, 103, 65, 0.3)" />
 
@@ -382,21 +508,24 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
             tabIndex={0}
             role="button"
             aria-label="Select stage 7: Aroma volatile profiling and sensory analysis"
-            onClick={() => onSelectStage(6, true)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(6, true); } }}
+            onClick={() => onSelectStage(6)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(6); } }}
           >
             <rect x="1025" y="60" width="130" height="280" rx="4" fill="transparent" className="station-focus-ring" stroke="var(--foundry-green)" strokeWidth="1.5" />
             <text x="1090" y="85" textAnchor="middle" className="station-badge-text">07</text>
             <text x="1090" y="105" textAnchor="middle" className="station-label-text">Aroma Analysis</text>
             <text x="1090" y="120" textAnchor="middle" className="station-sublabel-text">Profiling</text>
 
+            {/* Instrument Tower (GC-MS) */}
             <rect x="1045" y="165" width="34" height="75" rx="3" stroke="var(--foundry-green)" strokeWidth="1.4" fill="var(--culture-white)" />
             <rect x="1054" y="152" width="16" height="13" rx="1.5" stroke="var(--foundry-green)" strokeWidth="1.2" fill="var(--culture-white)" />
             <line x1="1062" y1="152" x2="1062" y2="165" stroke="var(--growth-green)" strokeWidth="1.4" />
             <circle cx="1062" cy="185" r="3.5" stroke="var(--foundry-green)" strokeWidth="1" fill={activeStageIndex === 6 ? "var(--growth-green)" : "none"} />
 
+            {/* Monitor Screen with Chromatogram */}
             <rect x="1088" y="170" width="55" height="45" rx="3" stroke="var(--foundry-green)" strokeWidth="1.4" fill={activeStageIndex === 6 ? "rgba(74, 103, 65, 0.12)" : "rgba(74, 103, 65, 0.04)"} />
             <path d="M 1115 215 L 1115 225 M 1105 225 L 1125 225" stroke="var(--foundry-green)" strokeWidth="1.3" />
+            {/* Peaks */}
             <path d="M 1093 205 L 1100 205 L 1104 195 L 1107 205 L 1113 205 L 1116 182 L 1119 205 L 1126 205 L 1129 192 L 1132 205 L 1138 205" stroke="var(--foundry-green)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
             <circle cx="1116" cy="182" r="2" fill="var(--growth-green)" />
 
@@ -412,14 +541,15 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
             tabIndex={0}
             role="button"
             aria-label="Select stage 8: Ingredient development for food producers"
-            onClick={() => onSelectStage(7, true)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(7, true); } }}
+            onClick={() => onSelectStage(7)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(7); } }}
           >
             <rect x="1205" y="60" width="130" height="280" rx="4" fill="transparent" className="station-focus-ring" stroke="var(--foundry-green)" strokeWidth="1.5" />
             <text x="1270" y="85" textAnchor="middle" className="station-badge-text">08</text>
             <text x="1270" y="105" textAnchor="middle" className="station-label-text">Ingredient Dev</text>
             <text x="1270" y="120" textAnchor="middle" className="station-sublabel-text">Food application</text>
 
+            {/* Extract Bottle */}
             <g transform="translate(1245, 172)">
               <rect x="8" y="0" width="16" height="8" rx="1.5" stroke="var(--foundry-green)" strokeWidth="1.3" fill="var(--culture-white)" />
               <path d="M 10 8 L 10 13 M 22 13 L 22 8" stroke="var(--foundry-green)" strokeWidth="1.2" />
@@ -428,6 +558,7 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
               <circle cx="16" cy="48" r="3.5" fill="var(--growth-green)" />
             </g>
 
+            {/* Radiating culinary application vectors */}
             <g className={activeStageIndex === 7 ? "anim-target-vector" : ""}>
               <path d="M 1285 190 L 1325 175" stroke="var(--foundry-green)" strokeWidth="1.3" strokeDasharray="2 2" />
               <circle cx="1328" cy="174" r="2.8" stroke="var(--foundry-green)" strokeWidth="1.2" fill="var(--culture-white)" />
@@ -447,10 +578,11 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
 
       <div className="diagram-caption-footer">
         <div className="keyboard-hint" aria-hidden="true">
-          <span>Scroll down or press</span>
+          <span>Scroll to explore</span>
+          <span className="kbd-key">↓</span>
+          <span>or use keys</span>
           <span className="kbd-key">←</span>
           <span className="kbd-key">→</span>
-          <span>to navigate</span>
         </div>
         <div className="diagram-status-note">
           Biology · Engineering · Evidence

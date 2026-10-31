@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { StageData } from '../types';
 import { MolassesVisual } from './stages/MolassesVisual';
 import { MediumPrepVisual } from './stages/MediumPrepVisual';
@@ -20,6 +20,19 @@ export const MobileStageFlow: React.FC<MobileStageFlowProps> = ({
   activeStageIndex,
   onSelectStage,
 }) => {
+  const indicatorBarRef = useRef<HTMLDivElement>(null);
+
+  // Automatically keep active indicator button centered in horizontal scroll
+  useEffect(() => {
+    if (!indicatorBarRef.current) return;
+    const activeBtn = indicatorBarRef.current.children[activeStageIndex] as HTMLElement;
+    if (activeBtn) {
+      const container = indicatorBarRef.current;
+      const scrollLeft = activeBtn.offsetLeft - container.offsetWidth / 2 + activeBtn.offsetWidth / 2;
+      container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+    }
+  }, [activeStageIndex]);
+
   const renderVisual = (index: number, isActive: boolean) => {
     switch (index) {
       case 0:
@@ -44,14 +57,19 @@ export const MobileStageFlow: React.FC<MobileStageFlowProps> = ({
   };
 
   return (
-    <div className="mobile-stage-flow" role="region" aria-label="Vertical process flow">
+    <div className="mobile-stage-flow" role="region" aria-label="Vertical process flow with scroll transitions">
       <div className="mobile-flow-meta">
-        <span className="diagram-meta-title">Complete 8-Stage Research Pathway</span>
+        <span className="diagram-meta-title">Scroll-driven Process Flow</span>
         <span className="diagram-meta-flow">01 → 08</span>
       </div>
 
-      {/* Quick Stage Indicator Bar */}
-      <div className="mobile-stage-indicator-bar" role="tablist" aria-label="Quick jump to stage">
+      {/* Sticky Quick Stage Indicator Bar */}
+      <div
+        ref={indicatorBarRef}
+        className="mobile-stage-indicator-bar"
+        role="tablist"
+        aria-label="Quick jump to stage"
+      >
         {stages.map((stage, idx) => (
           <button
             key={stage.id}
@@ -75,6 +93,7 @@ export const MobileStageFlow: React.FC<MobileStageFlowProps> = ({
             <div key={stage.id} className="mobile-step-container">
               {/* Step Card */}
               <div
+                data-mobile-card-index={index}
                 className={`mobile-step-card ${isActive ? 'is-active' : ''}`}
                 onClick={() => onSelectStage(index)}
                 role="button"
@@ -113,19 +132,18 @@ export const MobileStageFlow: React.FC<MobileStageFlowProps> = ({
                   </div>
                 )}
 
-                {/* Expanded Context Note when active */}
-                {isActive ? (
-                  <div className="mobile-step-detail">
-                    <strong>Focus: {stage.headline}</strong>
-                    <p>{stage.scientificContext}</p>
-                  </div>
-                ) : null}
+                {/* Expanded Context Note */}
+                <div className={`mobile-step-detail ${isActive ? 'is-expanded' : ''}`}>
+                  <strong>Focus: {stage.headline}</strong>
+                  <p>{stage.scientificContext}</p>
+                </div>
               </div>
 
-              {/* Connecting Vertical Pipe between steps */}
+              {/* Connecting Vertical Pipe between steps with animated flow drop */}
               {!isLast ? (
-                <div className="mobile-step-connector" aria-hidden="true">
+                <div className={`mobile-step-connector ${isActive ? 'is-flowing' : ''}`} aria-hidden="true">
                   <div className="mobile-connector-line" />
+                  <div className="mobile-flowing-pulse" />
                   <div className="mobile-connector-chevron">↓</div>
                 </div>
               ) : null}

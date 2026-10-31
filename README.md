@@ -1,68 +1,86 @@
 # Huner Biofoundry — Process Visualization
 
-Minimalist, interactive, and accessible visual explanation of Huner Biofoundry's early-stage research pathway:
+Minimalist, interactive, and scroll-driven visual journey of Huner Biofoundry's early-stage research pathway from sugar-industry molasses to a food-grade truffle-character aroma ingredient:
 
-$$\text{Molasses} \longrightarrow \text{Truffle culture} \longrightarrow \text{Aroma evaluation} \longrightarrow \text{Ingredient development}$$
+$$\text{Feedstock (01–02)} \longrightarrow \text{Fermentation (03–05)} \longleftrightarrow \text{Analysis (06–07)} \longrightarrow \text{Ingredient Dev (08)}$$
 
-Live publication: [https://hunelii.github.io/visualization/](https://hunelii.github.io/visualization/)
-
----
-
-## 1. Project Mission & Communication Context
-
-Huner is an early-stage biotechnology research initiative investigating the bioproduction of truffle-character aroma ingredients for food producers:
-
-1. **Molasses:** Utilizing sugar-industry molasses as a nutrient and carbon feed.
-2. **Truffle culture:** Propagating pure truffle mycelium isolate in liquid submerged fermentation under controlled parameters (aeration, agitation, temperature). *Note: The primary goal is aroma ingredient compounds, not whole fruiting body mushrooms.*
-3. **Aroma evaluation:** Screening volatile organic compounds and assessing organoleptic properties without premature commercial claims.
-4. **Ingredient development:** Translating sensory and biochemical findings into food application matrices for culinary manufacturers.
+- **Live URL:** [https://hunelii.github.io/visualization/](https://hunelii.github.io/visualization/)
+- **Repository:** [https://github.com/hunelii/visualization](https://github.com/hunelii/visualization)
 
 ---
 
-## 2. Architecture & Design Principles
+## 1. Process Pipeline & Stages
 
-- **Unified Narrative Map:** Inspired by calm information architecture (left narrative selectors, right unified technical schematic). The whole pathway is immediately understandable within 10–15 seconds even without interaction.
-- **Brand System:**
-  - Background: `#F4F1E8` (Culture white)
-  - Primary ink & lines: `#22311D` (Foundry forest green)
-  - Secondary green: `#374F2F` (Culture green)
-  - Growth accent: `#4A6741` (Growth green)
-  - Font: `Amazing Grotesk`, `Helvetica Neue`, sans-serif
-- **Accessibility:**
-  - Full WAI-ARIA tablist controls (`role="tablist"`, `role="tab"`, `aria-selected`, `aria-controls`).
-  - Keyboard navigation (`ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight`, `Home`, `End`).
-  - Screen reader announcements via live region (`aria-live="polite"`).
-  - Respects `prefers-reduced-motion`.
-- **Embeddable via iframe:**
-  - Supports `?embed=1` query parameter for embedding in the main website.
-  - Auto-height communication with parent window via `postMessage({ type: 'huner:visualization:resize', height })` with loop-prevention thresholds.
+The experience faithfully visualizes the entire 8-stage laboratory & bioprocess pipeline alongside closed-loop analytical optimization:
+
+1. **01 Molasses** — Feedstock selection & sugar-rich molasses characterization.
+2. **02 Medium Preparation** — Molasses-based medium formulation & controlled agitation.
+3. **03 Fungal Culture** — Pure *Tuber melanosporum* mycelium isolate cultivation.
+4. **04 Inoculation** — Aseptic inoculum transfer to seed propagation vessel.
+5. **05 Fermentation** — Submerged liquid fermentation with real-time monitored parameters:
+   - Temperature
+   - pH
+   - Dissolved Oxygen (DO)
+   - Biomass density
+   - Real-time process data
+6. **06 Sampling** — Aliquot extraction & sterile biomass screening.
+7. **07 Aroma Analysis** — GC-MS volatile profiling & sensory evaluation.
+   - **Iterative Feedback Loop:** Analytical and sensory metrics feed directly back into Fermentation for process parameter optimization (`Analytical feedback` $\longrightarrow$ `Process optimization`).
+8. **08 Ingredient Development** — Formulation and testing of consistent truffle-character aroma ingredients for food producers.
 
 ---
 
-## 3. Getting Started
+## 2. Scroll-Driven Scrollytelling Architecture
 
-### Install Dependencies
+- **Sticky Canvas & Dynamic Camera Spotlight:**
+  - On desktop, the technical 8-station schematic stays pinned (`position: sticky; top: 28px`).
+  - As the user scrolls through the narrative stream on the left, an `IntersectionObserver` scroll spy tracks the focal card.
+  - The camera spotlight smoothly glides horizontally (`translateX` across the 1440px SVG canvas) to highlight the active vessel.
+- **Fluid Conduit Liquid Flow:**
+  - Conduits between active stations display animated SVG liquid pulses (`.flowing-conduit`).
+  - The analytical feedback loop activates reverse dashed flowing pulses returning from Stage 07/06 into Stage 05 Fermentation.
+- **Progress Track & Milestones:**
+  - Top progress line tracks cumulative completion percentage (13% to 100%) with interactive milestone dots for instant jump navigation.
+- **Mobile Responsive Vertical Flow:**
+  - Under 980px, transforms into a clean vertical card feed connected by vertical flowing conduits with pulsing liquid droplets (`.mobile-flowing-pulse`).
+  - Sticky horizontal quick-jump tabs (`[01]` through `[08]`) allow instant access on touchscreens.
+- **Deep Linking & Accessibility:**
+  - Supports direct URL hashes (e.g. `#fermentation`, `#aroma-analysis`, `#05`).
+  - Arrow keys (`ArrowLeft`, `ArrowRight`, `ArrowUp`, `ArrowDown`) navigate stages smoothly.
+  - Full screen reader announcements (`aria-live="polite"`).
+  - Honors `prefers-reduced-motion`.
+
+---
+
+## 3. Brand Identity
+
+- **Background:** `#F4F1E8` (Culture white)
+- **Primary Ink & Lines:** `#22311D` (Foundry forest green)
+- **Secondary Green:** `#374F2F` (Culture green)
+- **Growth Accent:** `#4A6741` (Growth green)
+- **Typography:** `Amazing Grotesk`, `Helvetica Neue`, sans-serif
+
+---
+
+## 4. Local Development
+
 ```bash
+# Install dependencies
 npm install
-```
 
-### Local Development Server
-```bash
+# Start local dev server
 npm run dev
-```
 
-### Production Build
-```bash
+# Build production bundle
 npm run build
-```
 
-### Preview Production Build
-```bash
+# Preview build locally
 npm run preview
 ```
 
 ---
 
-## 4. Embed Integration
+## 5. Embed Integration
 
-See [docs/EMBED-INTEGRATION.md](docs/EMBED-INTEGRATION.md) for full React/Next.js and HTML embed instructions.
+The project is designed to be cleanly embedded into the main Huner website or any external portal.
+See [docs/EMBED-INTEGRATION.md](docs/EMBED-INTEGRATION.md) for full `<iframe>` auto-resizing integration guides.
