@@ -47,9 +47,11 @@ export const App: React.FC = () => {
         (s) => s.id === hash || s.numberString === hash || s.id.includes(hash)
       );
       if (targetIdx !== -1) {
-        setTimeout(() => {
-          scrollToStage(targetIdx);
-        }, 200);
+        scrollToStage(targetIdx, true);
+        const timer = setTimeout(() => {
+          scrollToStage(targetIdx, true);
+        }, 100);
+        return () => clearTimeout(timer);
       }
     }
   }, [scrollToStage]);

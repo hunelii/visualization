@@ -22,7 +22,7 @@ export const useScrollStageSpy = ({
   onStageChangeRef.current = onStageChange;
 
   // Programmatic scroll to a specific stage card
-  const scrollToStage = useCallback((index: number) => {
+  const scrollToStage = useCallback((index: number, immediate = false) => {
     if (index < 0 || index >= stageCount) return;
 
     isProgrammaticScroll.current = true;
@@ -33,89 +33,92 @@ export const useScrollStageSpy = ({
     }
 
     // Target the specific stage element (desktop card or mobile card)
-    const targetElement =
-      document.querySelector(`[data-stage-card-index="${index}"]`) ||
-      document.querySelector(`[data-mobile-card-index="${index}"]`);
+    const isMobile = window.innerWidth <= 980;
+    const targetElement = isMobile
+      ? document.querySelector(`[data-mobile-card-index="${index}"]`)
+      : document.querySelector(`[data-stage-card-index="${index}"]`);
 
     if (targetElement) {
       targetElement.scrollIntoView({
-        behavior: 'smooth',
+        behavior: immediate ? 'auto' : 'smooth',
         block: 'center',
       });
     }
 
-    // Release the lock after smooth scroll settles
+    // Release programmatic lock after scroll settles
     scrollTimeoutRef.current = window.setTimeout(() => {
       isProgrammaticScroll.current = false;
-    }, 700);
+    }, immediate ? 150 : 750);
   }, [stageCount]);
 
-  // Setup IntersectionObserver for scroll-driven detection
+  // High-performance RAF scroll handler
   useEffect(() => {
     if (!enabled) return;
 
-    // Observe both desktop and mobile stage cards
-    const cardElements = document.querySelectorAll(
-      '[data-stage-card-index], [data-mobile-card-index]'
-    );
+    let rafId: number | null = null;
 
-    if (cardElements.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (isProgrammaticScroll.current) return;
-
-        const viewportFocusY = window.innerHeight * 0.45;
-        let closestIndex = -1;
-        let minDistance = Infinity;
-
-        // Check intersecting cards and pick the one nearest to viewport focus line
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const rect = entry.boundingClientRect;
-            const cardCenterY = rect.top + rect.height / 2;
-            const distance = Math.abs(cardCenterY - viewportFocusY);
-
-            if (distance < minDistance) {
-              minDistance = distance;
-              const indexStr =
-                entry.target.getAttribute('data-stage-card-index') ||
-                entry.target.getAttribute('data-mobile-card-index');
-              if (indexStr !== null) {
-                closestIndex = parseInt(indexStr, 10);
-              }
-            }
-          }
-        });
-
-        if (closestIndex !== -1 && closestIndex !== activeStageIndexRef.current) {
-          onStageChangeRef.current(closestIndex);
-        }
-      },
-      {
-        root: null,
-        // Broad observation zone so cards are tracked smoothly during fast scroll
-        rootMargin: '-15% 0px -25% 0px',
-        threshold: [0.1, 0.3, 0.5, 0.7, 0.9],
-      }
-    );
-
-    cardElements.forEach((el) => observer.observe(el));
-
-    // Handle scroll boundary edges (top & bottom)
-    const handleScrollEdges = () => {
+    const evaluateActiveCard = () => {
       if (isProgrammaticScroll.current) return;
+
+      const isMobile = window.innerWidth <= 980;
+      const selector = isMobile ? '[data-mobile-card-index]' : '[data-stage-card-index]';
+      const cards = document.querySelectorAll(selector);
+
+      if (cards.length === 0) return;
+
+      // Check boundary at very top of page
       const scrollY = window.scrollY || window.pageYOffset;
-      if (scrollY < 60 && activeStageIndexRef.current !== 0) {
-        onStageChangeRef.current(0);
+      if (scrollY < 80) {
+        if (activeStageIndexRef.current !== 0) {
+          onStageChangeRef.current(0);
+        }
+        return;
+      }
+
+      const viewportFocusY = window.innerHeight * 0.42;
+      let closestIdx = -1;
+      let minDistance = Infinity;
+
+      cards.forEach((card) => {
+        const rect = card.getBoundingClientRect();
+        const cardCenterY = rect.top + rect.height / 2;
+        const dist = Math.abs(cardCenterY - viewportFocusY);
+
+        if (dist < minDistance) {
+          minDistance = dist;
+          const idxAttr = isMobile
+            ? card.getAttribute('data-mobile-card-index')
+            : card.getAttribute('data-stage-card-index');
+          if (idxAttr !== null) {
+            closestIdx = parseInt(idxAttr, 10);
+          }
+        }
+      });
+
+      if (closestIdx !== -1 && closestIdx !== activeStageIndexRef.current) {
+        onStageChangeRef.current(closestIdx);
       }
     };
 
-    window.addEventListener('scroll', handleScrollEdges, { passive: true });
+    const handleScroll = () => {
+      if (isProgrammaticScroll.current) return;
+      if (rafId !== null) return;
+
+      rafId = window.requestAnimationFrame(() => {
+        rafId = null;
+        evaluateActiveCard();
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll, { passive: true });
 
     return () => {
-      observer.disconnect();
-      window.removeEventListener('scroll', handleScrollEdges);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
       if (scrollTimeoutRef.current !== null) {
         window.clearTimeout(scrollTimeoutRef.current);
       }
