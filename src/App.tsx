@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { STAGES_DATA } from './data/stages';
-import { ProcessHeader } from './components/ProcessHeader';
-import { StageList } from './components/StageList';
 import { UnifiedDiagram } from './components/UnifiedDiagram';
-import { MobileStageFlow } from './components/MobileStageFlow';
 import { EmbedHelper } from './components/EmbedHelper';
 import { useScrollStageSpy } from './hooks/useScrollStageSpy';
 
 export const App: React.FC = () => {
-  const [activeStageIndex, setActiveStageIndex] = useState(() => {
+  const [initialStageIndex] = useState(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace('#', '').toLowerCase();
       if (hash) {
@@ -20,6 +17,7 @@ export const App: React.FC = () => {
     }
     return 0;
   });
+
   const [isEmbedded, setIsEmbedded] = useState(false);
 
   useEffect(() => {
@@ -31,11 +29,14 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Scroll spy hook that syncs scroll position with active stage and provides smooth scroll jumping
-  const { scrollToStage } = useScrollStageSpy({
-    stageCount: STAGES_DATA.length,
+  const {
+    continuousStage,
     activeStageIndex,
-    onStageChange: setActiveStageIndex,
+    scrollToStage,
+    scrubToProgress,
+  } = useScrollStageSpy({
+    stageCount: STAGES_DATA.length,
+    initialStageIndex,
     enabled: true,
   });
 
@@ -47,10 +48,9 @@ export const App: React.FC = () => {
         (s) => s.id === hash || s.numberString === hash || s.id.includes(hash)
       );
       if (targetIdx !== -1) {
-        scrollToStage(targetIdx, true);
         const timer = setTimeout(() => {
           scrollToStage(targetIdx, true);
-        }, 100);
+        }, 60);
         return () => clearTimeout(timer);
       }
     }
@@ -73,10 +73,12 @@ export const App: React.FC = () => {
         return;
       }
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-        const next = (activeStageIndex + 1) % STAGES_DATA.length;
+        e.preventDefault();
+        const next = Math.min(STAGES_DATA.length - 1, activeStageIndex + 1);
         scrollToStage(next);
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        const prev = (activeStageIndex - 1 + STAGES_DATA.length) % STAGES_DATA.length;
+        e.preventDefault();
+        const prev = Math.max(0, activeStageIndex - 1);
         scrollToStage(prev);
       }
     };
@@ -86,7 +88,7 @@ export const App: React.FC = () => {
   }, [activeStageIndex, scrollToStage]);
 
   return (
-    <div className={`huner-vis-wrapper ${isEmbedded ? 'is-embedded' : ''}`}>
+    <div className={`huner-vis-scroll-runway ${isEmbedded ? 'is-embedded' : ''}`}>
       <EmbedHelper isEmbedded={isEmbedded} />
 
       {/* Screen-reader live update announcement */}
@@ -94,52 +96,17 @@ export const App: React.FC = () => {
         Active stage: {STAGES_DATA[activeStageIndex].numberString} {STAGES_DATA[activeStageIndex].name}. {STAGES_DATA[activeStageIndex].description}
       </div>
 
-      {/* Embedded top brand bar when embedded */}
-      {isEmbedded ? (
-        <div className="embed-topbar" aria-hidden="true">
-          <div className="brand-badge">
-            <span className="brand-badge-dot" />
-            <span>Huner Biofoundry · Process Flow</span>
-          </div>
-          <a
-            href="https://hunelii.github.io/visualization/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="external-link"
-          >
-            Open standalone ↗
-          </a>
-        </div>
-      ) : null}
-
-      {/* Section Header (Always present at top) */}
-      <ProcessHeader isEmbedded={isEmbedded} />
-
-      {/* Desktop / Tablet Two-Column Scrollytelling Layout (>= 981px) */}
-      <div className="huner-vis-layout desktop-layout">
-        <section className="narrative-section" aria-label="Process narrative">
-          <StageList
-            stages={STAGES_DATA}
-            activeStageIndex={activeStageIndex}
-            onSelectStage={scrollToStage}
-          />
-        </section>
-
-        <aside className="visual-col" aria-label="Visual process diagram">
+      <main className="sticky-diagram-viewport" aria-label="Interactive process diagram">
+        <div className="diagram-stage-shell">
           <UnifiedDiagram
             stages={STAGES_DATA}
             activeStageIndex={activeStageIndex}
+            continuousStage={continuousStage}
             onSelectStage={scrollToStage}
+            onScrubProgress={scrubToProgress}
           />
-        </aside>
-      </div>
-
-      {/* Mobile Vertical Flow Layout (< 981px) */}
-      <MobileStageFlow
-        stages={STAGES_DATA}
-        activeStageIndex={activeStageIndex}
-        onSelectStage={scrollToStage}
-      />
+        </div>
+      </main>
     </div>
   );
 };
