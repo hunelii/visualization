@@ -14,7 +14,7 @@
 /* Tall Scrollytelling Runway so vertical scrolling drives the diagram smoothly */
 .huner-vis-scroll-runway {
   width: 100%;
-  min-height: 440vh;
+  min-height: 820vh;
   background-color: var(--culture-white);
   color: var(--foundry-green);
   position: relative;

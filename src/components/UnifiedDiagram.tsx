@@ -5,6 +5,7 @@ interface UnifiedDiagramProps {
   stages: StageData[];
   activeStageIndex: number;
   continuousStage: number;
+  stageDwellProgress?: number;
   onSelectStage: (index: number) => void;
   onScrubProgress?: (progress0to1: number) => void;
 }
@@ -39,6 +40,7 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
   stages,
   activeStageIndex,
   continuousStage,
+  stageDwellProgress = 0.5,
   onSelectStage,
   onScrubProgress,
 }) => {
@@ -87,9 +89,12 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
   const getStationProximity = (idx: number) =>
     clamp(1 - Math.abs(continuousStage - idx) / 1.25, 0, 1);
 
-  // Station cumulative completion (0 before reaching station, 1 after passing station)
-  const getStationCompletion = (idx: number) =>
-    clamp(continuousStage - idx + 0.85, 0, 1);
+  // Station cumulative completion (0 before reaching station, 0..1 while dwelling on station, 1 after passing)
+  const getStationCompletion = (idx: number) => {
+    if (idx < activeStageIndex) return 1;
+    if (idx === activeStageIndex) return clamp(0.2 + stageDwellProgress * 0.8, 0.2, 1);
+    return clamp(continuousStage - idx + 0.5, 0, 1);
+  };
 
   // Pointer scrubbing on the progress track
   const handleTrackPointer = (clientX: number) => {
@@ -360,11 +365,19 @@ export const UnifiedDiagram: React.FC<UnifiedDiagramProps> = ({
               strokeDasharray="2 5"
               opacity="0.35"
             />
-            {/* Floating top stage indicator pill */}
-            <rect x="-26" y="34" width="52" height="16" rx="8" fill="var(--foundry-green)" />
+            {/* Floating top stage indicator pill with live dwell progress bar */}
+            <rect x="-28" y="32" width="56" height="18" rx="9" fill="var(--foundry-green)" />
+            <rect
+              x="-24"
+              y="46.5"
+              width={48 * clamp(stageDwellProgress, 0.12, 1)}
+              height="2"
+              rx="1"
+              fill="var(--growth-green)"
+            />
             <text
               x="0"
-              y="45"
+              y="44"
               textAnchor="middle"
               fill="var(--culture-white)"
               style={{ fontFamily: 'var(--font-mono)', fontSize: '8.5px', fontWeight: 700, letterSpacing: '0.06em' }}

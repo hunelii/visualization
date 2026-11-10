@@ -32,6 +32,7 @@ export const App: React.FC = () => {
   const {
     continuousStage,
     activeStageIndex,
+    stageDwellProgress,
     scrollToStage,
     scrubToProgress,
   } = useScrollStageSpy({
@@ -102,6 +103,7 @@ export const App: React.FC = () => {
             stages={STAGES_DATA}
             activeStageIndex={activeStageIndex}
             continuousStage={continuousStage}
+            stageDwellProgress={stageDwellProgress}
             onSelectStage={scrollToStage}
             onScrubProgress={scrubToProgress}
           />
